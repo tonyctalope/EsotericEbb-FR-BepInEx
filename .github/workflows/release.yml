@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to package, for example 0.1.0 or v0.1.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Build and upload release zip
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+          cache: true
+          cache-dependency-path: "**/*.csproj"
+
+      - name: Resolve version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "release") {
+            $tag = "${{ github.event.release.tag_name }}"
+          } else {
+            $tag = "${{ inputs.version }}"
+          }
+
+          if ([string]::IsNullOrWhiteSpace($tag)) {
+            throw "No release tag or version was provided."
+          }
+
+          $version = $tag.TrimStart("v")
+          "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "MOD_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "ZIP_NAME=EsotericEbb-FR-BepInEx-$version.zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Restore
+        run: dotnet restore .\src\EsotericEbbFrench\EsotericEbbFrench.csproj
+
+      - name: Build
+        run: dotnet build .\src\EsotericEbbFrench\EsotericEbbFrench.csproj -c Release --no-restore
+
+      - name: Package
+        shell: pwsh
+        run: .\scripts\Build-Release.ps1 -Version $env:MOD_VERSION -SkipBuild
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ZIP_NAME }}
+          path: dist/${{ env.ZIP_NAME }}
+          if-no-files-found: error
+
+      - name: Attach zip to GitHub Release
+        if: github.event_name == 'release'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload $env:RELEASE_TAG "dist/$env:ZIP_NAME" --clobber

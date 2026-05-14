@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+          cache: true
+          cache-dependency-path: "**/*.csproj"
+
+      - name: Restore
+        run: dotnet restore .\src\EsotericEbbFrench\EsotericEbbFrench.csproj
+
+      - name: Build
+        run: dotnet build .\src\EsotericEbbFrench\EsotericEbbFrench.csproj -c Release --no-restore
+
+      - name: Package
+        shell: pwsh
+        run: .\scripts\Build-Release.ps1 -Version "ci-${{ github.run_number }}" -SkipBuild
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EsotericEbb-FR-BepInEx
+          path: dist/*.zip
+          if-no-files-found: error

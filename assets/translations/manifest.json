@@ -1,0 +1,84 @@
+{
+  "mod": "Esoteric Ebb - Traduction francaise",
+  "language": "fr",
+  "generated": "2026-05-14",
+  "gameBuildGuid": "1020fd92b7824ead85c97f0f89f89a3d",
+  "profiles": {
+    "fr-columns": [
+      {
+        "assetName": "SheetInfo",
+        "file": "SheetInfo.txt",
+        "bytes": 67049,
+        "sha256": "132bd8f94de39906b47b11ca82a5a1ebf5d95126a6d963d63e142e6a0d8d43cb"
+      },
+      {
+        "assetName": "GlossaryTerms",
+        "file": "GlossaryTerms.txt",
+        "bytes": 268024,
+        "sha256": "7283e7bfa3a44a1b41b5956f4e7a3eadf4f638a1cdeb7178c69dc328141af4b2"
+      },
+      {
+        "assetName": "UIElements",
+        "file": "UIElements.txt",
+        "bytes": 1093,
+        "sha256": "a17cde90db78e7a369f0c17db6590e08b62bd0a5462f288859bc64d9e3f11b10"
+      },
+      {
+        "assetName": "Dialogs",
+        "file": "Dialogs.txt",
+        "bytes": 9859302,
+        "sha256": "75784b0c2083df967b70b054f272e2b51a3779428ae785a2ab61f1fd636007d5"
+      },
+      {
+        "assetName": "Feats",
+        "file": "Feats.txt",
+        "bytes": 15824,
+        "sha256": "2b80ff5ba7cb15939ee433897ded7d1116a3829cc8b051746ad1b5f48b6878c3"
+      },
+      {
+        "assetName": "QuestPoints",
+        "file": "QuestPoints.txt",
+        "bytes": 62707,
+        "sha256": "411d98a08ef638c7f10d161073672ede449847a526bb81a540c0f55d5f86cc86"
+      }
+    ],
+    "german-slot": [
+      {
+        "assetName": "SheetInfo",
+        "file": "SheetInfo.txt",
+        "bytes": 100208,
+        "sha256": "72f658f76c48e1e39706b2839b327be6cd16b789a2aa95a3f99b9abe8d6b0c5d"
+      },
+      {
+        "assetName": "GlossaryTerms",
+        "file": "GlossaryTerms.txt",
+        "bytes": 399847,
+        "sha256": "bab6e81dfb02c15444fdcc7784b4d245cf5ea6d91549df246dfa83944185e55a"
+      },
+      {
+        "assetName": "UIElements",
+        "file": "UIElements.txt",
+        "bytes": 1497,
+        "sha256": "1980068b25127ae9cf2206ae46a1cd518816ef2aff9e8acf2e19179ef8ae974f"
+      },
+      {
+        "assetName": "Dialogs",
+        "file": "Dialogs.txt",
+        "bytes": 13470502,
+        "sha256": "4725e650df262c2241eaf68d28af6d7a6140be5acfe0ca7f1bb7c0537336f903"
+      },
+      {
+        "assetName": "Feats",
+        "file": "Feats.txt",
+        "bytes": 23941,
+        "sha256": "8ed8684c31573558472827ab0588172ec568cc53c1e97e0102e441ec6fb98614"
+      },
+      {
+        "assetName": "QuestPoints",
+        "file": "QuestPoints.txt",
+        "bytes": 93830,
+        "sha256": "556623c246a53318c913bb3b1767fb028655b58b457cd0442dd9cb9bb5e90d6d"
+      }
+    ]
+  }
+}

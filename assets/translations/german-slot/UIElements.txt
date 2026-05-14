@@ -1,0 +1,25 @@
+ID,ENGLISH,GERMAN,FRENCH
+UI_1,New Game,Nouvelle partie,Nouvelle partie
+UI_2,Load,Charger,Charger
+UI_3,Options,Options,Options
+UI_4,Credits,Crédits,Crédits
+UI_5,Exit,Quitter,Quitter
+UI_6,,,
+UI_7,,,
+UI_8,,,
+,,,
+Death_1_1,The Cleric is dead.,Le Clerc est mort.,Le Clerc est mort.
+Death_1_2,"Alas, this String will be discarded.","Hélas, ce Fil sera abandonné.","Hélas, ce Fil sera abandonné."
+Death_1_3,"But you can see another, can you not?","Mais tu peux en voir un autre, n'est-ce pas ?","Mais tu peux en voir un autre, n'est-ce pas ?"
+,,,
+Death_2_1,The Cleric has ceased to be.,Le Clerc a cessé d'être.,Le Clerc a cessé d'être.
+Death_2_2,That happens when you run out of 'health'.,C'est ce qui arrive quand on n'a plus de 'santé'.,C'est ce qui arrive quand on n'a plus de 'santé'.
+Death_2_3,"Try to stay intact next time, eh?","Essaie de rester entier la prochaine fois, hein ?","Essaie de rester entier la prochaine fois, hein ?"
+,,,
+Death_3_1,The Cleric has passed away.,Le Clerc s'en est allé.,Le Clerc s'en est allé.
+Death_3_2,This is very sad.,C'est très triste.,C'est très triste.
+Death_3_3,"Next, might I suggest avoiding danger?","Ensuite, puis-je suggérer d'éviter le danger ?","Ensuite, puis-je suggérer d'éviter le danger ?"
+,,,
+Death_4_1,The Cleric is no more.,Le Clerc n'est plus.,Le Clerc n'est plus.
+Death_4_2,But this feels... off.,Mais quelque chose cloche...,Mais quelque chose cloche...
+Death_4_3,Wouldn't you agree?,Tu ne trouves pas ?,Tu ne trouves pas ?

@@ -59,6 +59,31 @@ internal static class TranslationCatalog
         return false;
     }
 
+    public static bool TryGetReplacementCsv(string? originalCsv, out string replacement, out string assetName)
+    {
+        replacement = string.Empty;
+        assetName = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(originalCsv))
+        {
+            return false;
+        }
+
+        assetName = DetectAssetName(originalCsv);
+        if (assetName.Length == 0)
+        {
+            return false;
+        }
+
+        if (Texts.TryGetValue(assetName, out string? value))
+        {
+            replacement = value;
+            return true;
+        }
+
+        return false;
+    }
+
     public static bool TryGetLine(string? id, out string text)
     {
         text = string.Empty;
@@ -243,6 +268,71 @@ internal static class TranslationCatalog
         }
 
         return rows;
+    }
+
+    private static string DetectAssetName(string csv)
+    {
+        string header = FirstCsvLine(csv);
+        string firstKey = FirstCsvFieldOfSecondLine(csv);
+
+        if (header.StartsWith("Key,Speaker,Area,Type,", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Dialogs";
+        }
+
+        if (header.Contains("ResponseAS,Tags,DC", StringComparison.OrdinalIgnoreCase))
+        {
+            return "GlossaryTerms";
+        }
+
+        if (header.Contains("CHINESE", StringComparison.OrdinalIgnoreCase)
+            && header.Contains("SPANISH", StringComparison.OrdinalIgnoreCase)
+            && firstKey.StartsWith("Quest_", StringComparison.OrdinalIgnoreCase))
+        {
+            return "QuestPoints";
+        }
+
+        if (firstKey.StartsWith("UI_", StringComparison.OrdinalIgnoreCase))
+        {
+            return "UIElements";
+        }
+
+        if (firstKey.StartsWith("FEAT_", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Feats";
+        }
+
+        if (header.StartsWith("ID,ENGLISH,GERMAN", StringComparison.OrdinalIgnoreCase))
+        {
+            return "SheetInfo";
+        }
+
+        return string.Empty;
+    }
+
+    private static string FirstCsvLine(string csv)
+    {
+        int end = csv.IndexOf('\n');
+        string line = end >= 0 ? csv[..end] : csv;
+        return line.TrimEnd('\r');
+    }
+
+    private static string FirstCsvFieldOfSecondLine(string csv)
+    {
+        int firstLineEnd = csv.IndexOf('\n');
+        if (firstLineEnd < 0 || firstLineEnd + 1 >= csv.Length)
+        {
+            return string.Empty;
+        }
+
+        int secondLineEnd = csv.IndexOf('\n', firstLineEnd + 1);
+        string line = secondLineEnd >= 0
+            ? csv.Substring(firstLineEnd + 1, secondLineEnd - firstLineEnd - 1)
+            : csv[(firstLineEnd + 1)..];
+
+        int comma = line.IndexOf(',');
+        string field = comma >= 0 ? line[..comma] : line;
+        return field.Trim().Trim('"');
     }
 
     private static string Normalize(string value)

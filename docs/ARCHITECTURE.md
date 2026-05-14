@@ -21,7 +21,7 @@ Le mod charge des fichiers `.txt` externes portant les memes noms depuis :
 BepInEx/plugins/EsotericEbbFrench/translations/<profile>/
 ```
 
-Il indexe aussi les lignes CSV en memoire, puis patche `LocalizationManager.CheckLanguage` et `LocalizationManager.CheckDialogLanguage`. Quand le jeu demande le texte d'un ID localise, le mod renvoie directement la traduction francaise. Un patch `TextAsset.text` reste present comme filet de securite pour les chemins qui lisent encore le `TextAsset` brut.
+Il indexe aussi les lignes CSV en memoire, puis patche `LocalizationManager.ParseCSV`, `LocalizationManager.CheckLanguage` et `LocalizationManager.CheckDialogLanguage`. Quand le jeu parse ses tables, le mod remplace l'entree CSV par le profil francais ; quand le jeu demande ensuite le texte d'un ID localise, le mod peut aussi renvoyer directement la traduction francaise. Un patch `TextAsset.text` reste present comme filet de securite pour les chemins qui lisent encore le `TextAsset` brut.
 
 ## Profils
 

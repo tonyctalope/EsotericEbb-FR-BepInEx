@@ -13,7 +13,7 @@ public sealed class Plugin : BasePlugin
 {
     public const string PluginGuid = "fr.esotericebb.translation";
     public const string PluginName = "Esoteric Ebb - Traduction francaise";
-    public const string PluginVersion = "0.1.3";
+    public const string PluginVersion = "0.1.4";
 
     internal static ManualLogSource Logger { get; private set; } = null!;
 

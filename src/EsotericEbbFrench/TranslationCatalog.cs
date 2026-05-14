@@ -8,6 +8,8 @@ internal static class TranslationCatalog
     private static readonly Dictionary<string, string> Texts = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, string> Lines = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, string> DialogLines = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, string> ReverseTexts = new(StringComparer.Ordinal);
+    private static readonly HashSet<string> AmbiguousReverseTexts = new(StringComparer.Ordinal);
 
     public static int AssetCount => Texts.Count;
     public static int LineCount => Lines.Count + DialogLines.Count;
@@ -17,6 +19,8 @@ internal static class TranslationCatalog
         Texts.Clear();
         Lines.Clear();
         DialogLines.Clear();
+        ReverseTexts.Clear();
+        AmbiguousReverseTexts.Clear();
 
         if (!Directory.Exists(directory))
         {
@@ -37,6 +41,7 @@ internal static class TranslationCatalog
             LoadLines(assetName, content, profile, logger);
         }
 
+        LoadReverseTexts(directory, logger);
         logger.LogInfo($"Loaded translation profile: {directory}");
         return Texts.Count > 0;
     }
@@ -120,6 +125,33 @@ internal static class TranslationCatalog
         return false;
     }
 
+    public static bool TryGetReverseText(string? source, out string text)
+    {
+        text = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            return false;
+        }
+
+        if (ReverseTexts.TryGetValue(source, out string? value))
+        {
+            text = value;
+            return true;
+        }
+
+        string trimmed = source.Trim();
+        if (trimmed.Length != source.Length && ReverseTexts.TryGetValue(trimmed, out value))
+        {
+            int leading = source.Length - source.TrimStart().Length;
+            int trailing = source.Length - source.TrimEnd().Length;
+            text = source[..leading] + value + source[(source.Length - trailing)..];
+            return true;
+        }
+
+        return false;
+    }
+
     private static void LoadLines(string assetName, string content, string profile, ManualLogSource logger)
     {
         List<string[]> rows = ParseCsv(content);
@@ -167,6 +199,86 @@ internal static class TranslationCatalog
         }
 
         logger.LogInfo($"Indexed {added} localized IDs from {assetName}.");
+    }
+
+    private static void LoadReverseTexts(string directory, ManualLogSource logger)
+    {
+        string? profilesDirectory = Directory.GetParent(directory)?.FullName;
+        string sourceDirectory = profilesDirectory == null
+            ? directory
+            : Path.Combine(profilesDirectory, "fr-columns");
+
+        if (!Directory.Exists(sourceDirectory))
+        {
+            sourceDirectory = directory;
+        }
+
+        foreach (string path in Directory.EnumerateFiles(sourceDirectory, "*.txt", SearchOption.TopDirectoryOnly))
+        {
+            string assetName = Normalize(Path.GetFileNameWithoutExtension(path));
+            LoadReverseTextsFromAsset(assetName, File.ReadAllText(path));
+        }
+
+        logger.LogInfo($"Indexed {ReverseTexts.Count} unambiguous source text replacements.");
+    }
+
+    private static void LoadReverseTextsFromAsset(string assetName, string content)
+    {
+        List<string[]> rows = ParseCsv(content);
+        if (rows.Count < 2)
+        {
+            return;
+        }
+
+        string[] header = rows[0];
+        bool dialogs = assetName.Equals("Dialogs", StringComparison.OrdinalIgnoreCase);
+        int sourceIndex = IndexOf(header, dialogs ? "EN" : "ENGLISH");
+        int targetIndex = IndexOf(header, dialogs ? "FR" : "FRENCH");
+
+        if (sourceIndex < 0 || targetIndex < 0)
+        {
+            return;
+        }
+
+        for (int i = 1; i < rows.Count; i++)
+        {
+            string[] row = rows[i];
+            if (sourceIndex >= row.Length || targetIndex >= row.Length)
+            {
+                continue;
+            }
+
+            AddReverseText(row[sourceIndex], row[targetIndex]);
+        }
+    }
+
+    private static void AddReverseText(string source, string target)
+    {
+        source = source.Trim();
+        target = target.Trim();
+
+        if (source.Length < 2 || target.Length == 0 || source.Equals(target, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (AmbiguousReverseTexts.Contains(source))
+        {
+            return;
+        }
+
+        if (ReverseTexts.TryGetValue(source, out string? existing))
+        {
+            if (!existing.Equals(target, StringComparison.Ordinal))
+            {
+                ReverseTexts.Remove(source);
+                AmbiguousReverseTexts.Add(source);
+            }
+
+            return;
+        }
+
+        ReverseTexts[source] = target;
     }
 
     private static int FindValueColumn(string assetName, string[] header, string profile)

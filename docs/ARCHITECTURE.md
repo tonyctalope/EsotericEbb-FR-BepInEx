@@ -21,7 +21,7 @@ Le mod charge des fichiers `.txt` externes portant les memes noms depuis :
 BepInEx/plugins/EsotericEbbFrench/translations/<profile>/
 ```
 
-Il patche ensuite `TextAsset.text`. Quand le jeu demande le texte d'un asset connu, le mod renvoie le contenu localise. Cela couvre les references serialisees et evite de modifier `resources.assets`.
+Il indexe aussi les lignes CSV en memoire, puis patche `LocalizationManager.CheckLanguage` et `LocalizationManager.CheckDialogLanguage`. Quand le jeu demande le texte d'un ID localise, le mod renvoie directement la traduction francaise. Un patch `TextAsset.text` reste present comme filet de securite pour les chemins qui lisent encore le `TextAsset` brut.
 
 ## Profils
 

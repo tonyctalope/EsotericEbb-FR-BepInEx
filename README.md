@@ -51,7 +51,7 @@ Prerequis :
 - BepInEx 6 IL2CPP installe cote joueur ;
 - PowerShell pour les scripts.
 
-Le depot inclut `NuGet.config` avec le feed officiel BepInEx necessaire a `BepInEx.Unity.IL2CPP`.
+Le depot inclut `NuGet.config` avec le feed officiel BepInEx necessaire a `BepInEx.Unity.IL2CPP`. La compilation CI reference aussi `UnityEngine.Modules`, qui fournit les assemblies UnityEngine au compilateur sans les embarquer dans le zip final.
 
 Construire un zip de release :
 

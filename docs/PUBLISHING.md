@@ -35,6 +35,7 @@ Ensuite, sur GitHub :
 GitHub Actions va alors :
 
 - restaurer les packages NuGet ;
+- recuperer les references UnityEngine de compilation via `UnityEngine.Modules` ;
 - compiler `EsotericEbbFrench.dll` en `Release` ;
 - construire le zip d'installation ;
 - attacher automatiquement `EsotericEbb-FR-BepInEx-0.1.0.zip` a la release.

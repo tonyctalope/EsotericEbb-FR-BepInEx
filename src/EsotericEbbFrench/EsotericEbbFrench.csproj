@@ -13,5 +13,6 @@
   <ItemGroup>
     <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.721" PrivateAssets="all" />
     <PackageReference Include="HarmonyX" Version="2.15.0" PrivateAssets="all" />
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.33" PrivateAssets="all" />
   </ItemGroup>
 </Project>

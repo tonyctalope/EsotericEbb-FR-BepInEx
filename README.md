@@ -31,7 +31,7 @@ Esoteric Ebb/
 
 4. Lancer le jeu.
 
-Par defaut, le mod utilise le profil `german-slot`, qui copie le francais dans l'emplacement allemand pour maximiser la compatibilite. Si le jeu expose une vraie option francaise, lancer une fois le jeu puis modifier :
+Par defaut, le mod utilise le profil `english-slot`, qui remplace l'emplacement anglais par le francais pour fonctionner sans menu de langue. Si le jeu expose une vraie option francaise, lancer une fois le jeu puis modifier :
 
 ```text
 BepInEx/config/fr.esotericebb.translation.cfg
@@ -42,6 +42,8 @@ et mettre :
 ```ini
 Profile = fr-columns
 ```
+
+Le profil `german-slot` reste disponible si tu preferes garder l'emplacement anglais original et choisir l'allemand en jeu.
 
 ## Build
 

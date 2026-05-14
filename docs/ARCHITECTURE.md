@@ -21,9 +21,7 @@ Le mod charge des fichiers `.txt` externes portant les memes noms depuis :
 BepInEx/plugins/EsotericEbbFrench/translations/<profile>/
 ```
 
-Il patche ensuite `TextAsset.text`. Quand le jeu demande le texte d'un asset connu, le mod renvoie le contenu localise. Cela couvre les references serialisees et les chargements `Resources.Load` classiques.
-
-Un patch secondaire sur `Resources.Load` permet aussi de fournir un `TextAsset` de remplacement si le jeu tente de charger directement l'un de ces noms et que l'asset original n'est pas resolu.
+Il patche ensuite `TextAsset.text`. Quand le jeu demande le texte d'un asset connu, le mod renvoie le contenu localise. Cela couvre les references serialisees et evite de modifier `resources.assets`.
 
 ## Profils
 
@@ -36,9 +34,18 @@ Profil propre. Il conserve les colonnes francaises natives :
 
 Ce profil est ideal si le jeu expose une option francaise, ou si un patch futur force explicitement la langue `FR`.
 
+### `english-slot`
+
+Profil par defaut. Il conserve les colonnes francaises mais copie aussi :
+
+- `Dialogs.FR` vers `Dialogs.EN`
+- `FRENCH` vers `ENGLISH`
+
+Il permet a la traduction de fonctionner meme quand le jeu reste sur sa langue anglaise par defaut ou ne propose pas encore de menu de langue.
+
 ### `german-slot`
 
-Profil compatible par defaut. Il conserve les colonnes francaises mais copie aussi :
+Profil compatible alternatif. Il conserve les colonnes francaises mais copie aussi :
 
 - `Dialogs.FR` vers `Dialogs.DE`
 - `FRENCH` vers `GERMAN`

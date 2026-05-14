@@ -1,20 +1,16 @@
 using BepInEx.Logging;
-using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace EsotericEbbFrench;
 
 internal static class TranslationCatalog
 {
     private static readonly Dictionary<string, string> Texts = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<string, TextAsset> CreatedAssets = new(StringComparer.OrdinalIgnoreCase);
 
     public static int Count => Texts.Count;
 
     public static bool Load(string directory, ManualLogSource logger)
     {
         Texts.Clear();
-        CreatedAssets.Clear();
 
         if (!Directory.Exists(directory))
         {
@@ -53,34 +49,6 @@ internal static class TranslationCatalog
         }
 
         return false;
-    }
-
-    public static bool TryCreateAsset(string? assetNameOrPath, out Object replacement)
-    {
-        replacement = null!;
-
-        if (string.IsNullOrWhiteSpace(assetNameOrPath))
-        {
-            return false;
-        }
-
-        string assetName = Normalize(assetNameOrPath);
-        if (!Texts.TryGetValue(assetName, out string? text))
-        {
-            return false;
-        }
-
-        if (!CreatedAssets.TryGetValue(assetName, out TextAsset? asset))
-        {
-            asset = new TextAsset(text)
-            {
-                name = assetName
-            };
-            CreatedAssets[assetName] = asset;
-        }
-
-        replacement = asset;
-        return true;
     }
 
     private static string Normalize(string value)

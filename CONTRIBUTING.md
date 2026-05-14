@@ -12,10 +12,11 @@ Les fichiers sources de release sont dans :
 
 ```text
 assets/translations/fr-columns/
+assets/translations/english-slot/
 assets/translations/german-slot/
 ```
 
-Le profil `fr-columns` conserve les colonnes francaises propres. Le profil `german-slot` copie le francais dans les colonnes allemandes pour les versions du jeu qui ne proposent pas encore explicitement le francais.
+Le profil `fr-columns` conserve les colonnes francaises propres. Le profil `english-slot` copie le francais dans les colonnes anglaises pour fonctionner sans menu de langue. Le profil `german-slot` copie le francais dans les colonnes allemandes pour les versions du jeu qui proposent un choix de langue mais pas encore explicitement le francais.
 
 Apres modification, regenerer le manifeste :
 

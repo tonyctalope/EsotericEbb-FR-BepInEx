@@ -33,6 +33,10 @@ def copy_text(src: Path, dst: Path):
 
 
 def mirror_to_german(asset_name: str, src: Path, dst: Path):
+    mirror_to_slot(asset_name, src, dst, "DE", "GERMAN")
+
+
+def mirror_to_slot(asset_name: str, src: Path, dst: Path, dialog_target: str, table_target: str):
     rows = read_rows(src)
     if not rows:
         copy_text(src, dst)
@@ -40,7 +44,7 @@ def mirror_to_german(asset_name: str, src: Path, dst: Path):
 
     header = rows[0]
     source_name = "FR" if asset_name == "Dialogs" else "FRENCH"
-    target_name = "DE" if asset_name == "Dialogs" else "GERMAN"
+    target_name = dialog_target if asset_name == "Dialogs" else table_target
 
     if source_name not in header:
         copy_text(src, dst)
@@ -100,6 +104,7 @@ def main():
     repo = args.repo.resolve()
     source = args.source.resolve()
     fr_dir = repo / "assets" / "translations" / "fr-columns"
+    english_dir = repo / "assets" / "translations" / "english-slot"
     compat_dir = repo / "assets" / "translations" / "german-slot"
 
     for asset_name, file_name in ASSETS.items():
@@ -108,6 +113,7 @@ def main():
             raise FileNotFoundError(src)
 
         copy_text(src, fr_dir / f"{asset_name}.txt")
+        mirror_to_slot(asset_name, src, english_dir / f"{asset_name}.txt", "EN", "ENGLISH")
         mirror_to_german(asset_name, src, compat_dir / f"{asset_name}.txt")
 
     manifest = {
@@ -118,7 +124,7 @@ def main():
         "profiles": {},
     }
 
-    for profile, directory in (("fr-columns", fr_dir), ("german-slot", compat_dir)):
+    for profile, directory in (("fr-columns", fr_dir), ("english-slot", english_dir), ("german-slot", compat_dir)):
         manifest["profiles"][profile] = [
             {
                 "assetName": asset_name,

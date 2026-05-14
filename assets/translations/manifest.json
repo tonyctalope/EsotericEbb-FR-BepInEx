@@ -42,6 +42,44 @@
         "sha256": "411d98a08ef638c7f10d161073672ede449847a526bb81a540c0f55d5f86cc86"
       }
     ],
+    "english-slot": [
+      {
+        "assetName": "SheetInfo",
+        "file": "SheetInfo.txt",
+        "bytes": 70782,
+        "sha256": "1128fec6f0adcc1b325f67ba60390537e6a6de1b6cee5aa1ff3856a8ed9f0ea6"
+      },
+      {
+        "assetName": "GlossaryTerms",
+        "file": "GlossaryTerms.txt",
+        "bytes": 282514,
+        "sha256": "ea482540de591062f737648040876a45e5f704c30510088529cae12b2787b526"
+      },
+      {
+        "assetName": "UIElements",
+        "file": "UIElements.txt",
+        "bytes": 1119,
+        "sha256": "82708367a3f160367e974d9e60048746272aed8324b137075e1cb1061671edff"
+      },
+      {
+        "assetName": "Dialogs",
+        "file": "Dialogs.txt",
+        "bytes": 10120030,
+        "sha256": "54db02441b03b883074e2859240bf3e31973fcda01962047d3a4bbb4acab7e6f"
+      },
+      {
+        "assetName": "Feats",
+        "file": "Feats.txt",
+        "bytes": 17309,
+        "sha256": "67e61ff2abdde738be881c6764bd0e48345f170af92e85df8273df56ae366786"
+      },
+      {
+        "assetName": "QuestPoints",
+        "file": "QuestPoints.txt",
+        "bytes": 66817,
+        "sha256": "6a5bcbf3f062ebbff8bb07fd07369b72a3bc12a77723e49cf119edb7199d6083"
+      }
+    ],
     "german-slot": [
       {
         "assetName": "SheetInfo",

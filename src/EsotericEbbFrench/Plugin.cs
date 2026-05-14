@@ -13,7 +13,7 @@ public sealed class Plugin : BasePlugin
 {
     public const string PluginGuid = "fr.esotericebb.translation";
     public const string PluginName = "Esoteric Ebb - Traduction francaise";
-    public const string PluginVersion = "0.1.0";
+    public const string PluginVersion = "0.1.1";
 
     internal static ManualLogSource Logger { get; private set; } = null!;
 
@@ -26,18 +26,18 @@ public sealed class Plugin : BasePlugin
         ConfigEntry<string> profile = Config.Bind(
             "General",
             "Profile",
-            "german-slot",
-            "Translation profile to load. Use 'german-slot' for maximum compatibility, or 'fr-columns' if the game exposes a French language slot.");
+            "english-slot",
+            "Translation profile to load. Use 'english-slot' to show French by default, 'german-slot' to use the German language slot, or 'fr-columns' if the game exposes a French language slot.");
 
         string pluginDirectory = Path.Combine(Paths.PluginPath, "EsotericEbbFrench");
         string translationsDirectory = Path.Combine(pluginDirectory, "translations", profile.Value.Trim());
 
         if (!TranslationCatalog.Load(translationsDirectory, Logger))
         {
-            string fallback = Path.Combine(pluginDirectory, "translations", "german-slot");
+            string fallback = Path.Combine(pluginDirectory, "translations", "english-slot");
             if (!translationsDirectory.Equals(fallback, StringComparison.OrdinalIgnoreCase))
             {
-                Logger.LogWarning($"Profile '{profile.Value}' could not be loaded. Falling back to german-slot.");
+                Logger.LogWarning($"Profile '{profile.Value}' could not be loaded. Falling back to english-slot.");
                 TranslationCatalog.Load(fallback, Logger);
             }
         }

@@ -1,0 +1,25 @@
+ID,ENGLISH,GERMAN,FRENCH
+UI_1,Nouvelle partie,,Nouvelle partie
+UI_2,Charger,,Charger
+UI_3,Options,,Options
+UI_4,Crédits,,Crédits
+UI_5,Quitter,,Quitter
+UI_6,,,
+UI_7,,,
+UI_8,,,
+,,,
+Death_1_1,Le Clerc est mort.,,Le Clerc est mort.
+Death_1_2,"Hélas, ce Fil sera abandonné.",,"Hélas, ce Fil sera abandonné."
+Death_1_3,"Mais tu peux en voir un autre, n'est-ce pas ?",,"Mais tu peux en voir un autre, n'est-ce pas ?"
+,,,
+Death_2_1,Le Clerc a cessé d'être.,,Le Clerc a cessé d'être.
+Death_2_2,C'est ce qui arrive quand on n'a plus de 'santé'.,,C'est ce qui arrive quand on n'a plus de 'santé'.
+Death_2_3,"Essaie de rester entier la prochaine fois, hein ?",,"Essaie de rester entier la prochaine fois, hein ?"
+,,,
+Death_3_1,Le Clerc s'en est allé.,,Le Clerc s'en est allé.
+Death_3_2,C'est très triste.,,C'est très triste.
+Death_3_3,"Ensuite, puis-je suggérer d'éviter le danger ?",,"Ensuite, puis-je suggérer d'éviter le danger ?"
+,,,
+Death_4_1,Le Clerc n'est plus.,,Le Clerc n'est plus.
+Death_4_2,Mais quelque chose cloche...,,Mais quelque chose cloche...
+Death_4_3,Tu ne trouves pas ?,,Tu ne trouves pas ?

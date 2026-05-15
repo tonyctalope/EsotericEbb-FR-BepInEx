@@ -64,7 +64,7 @@ internal static class CanvasManagerStartPatch
 {
     private static MethodBase? TargetMethod()
     {
-        return AccessTools.Method("CanvasManager:Start");
+        return RuntimeTypeResolver.Method("CanvasManager", "Start");
     }
 
     private static void Postfix()
@@ -78,7 +78,7 @@ internal static class CanvasManagerGetUiPatch
 {
     private static MethodBase? TargetMethod()
     {
-        return AccessTools.Method("CanvasManager:GetUI");
+        return RuntimeTypeResolver.Method("CanvasManager", "GetUI");
     }
 
     private static void Postfix()

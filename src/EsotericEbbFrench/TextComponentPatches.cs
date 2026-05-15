@@ -29,14 +29,12 @@ internal static class TmpTextSetterPatch
 {
     private static bool Prepare()
     {
-        Type? type = AccessTools.TypeByName("TMPro.TMP_Text");
-        return type != null && AccessTools.PropertySetter(type, "text") != null;
+        return RuntimeTypeResolver.PropertySetter("TMPro.TMP_Text", "text") != null;
     }
 
     private static MethodBase? TargetMethod()
     {
-        Type? type = AccessTools.TypeByName("TMPro.TMP_Text");
-        return type == null ? null : AccessTools.PropertySetter(type, "text");
+        return RuntimeTypeResolver.PropertySetter("TMPro.TMP_Text", "text");
     }
 
     private static void Prefix(ref string __0)
@@ -59,14 +57,12 @@ internal static class UnityUiTextSetterPatch
 {
     private static bool Prepare()
     {
-        Type? type = AccessTools.TypeByName("UnityEngine.UI.Text");
-        return type != null && AccessTools.PropertySetter(type, "text") != null;
+        return RuntimeTypeResolver.PropertySetter("UnityEngine.UI.Text", "text") != null;
     }
 
     private static MethodBase? TargetMethod()
     {
-        Type? type = AccessTools.TypeByName("UnityEngine.UI.Text");
-        return type == null ? null : AccessTools.PropertySetter(type, "text");
+        return RuntimeTypeResolver.PropertySetter("UnityEngine.UI.Text", "text");
     }
 
     private static void Prefix(ref string __0)

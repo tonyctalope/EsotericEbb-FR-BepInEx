@@ -22,7 +22,7 @@ internal static class CheckLanguagePatch
 {
     private static MethodBase? TargetMethod()
     {
-        return AccessTools.Method("LocalizationManager:CheckLanguage");
+        return RuntimeTypeResolver.Method("LocalizationManager", "CheckLanguage", typeof(string));
     }
 
     private static void Postfix(string __0, ref string __result)
@@ -40,7 +40,7 @@ internal static class CheckDialogLanguagePatch
 {
     private static MethodBase? TargetMethod()
     {
-        return AccessTools.Method("LocalizationManager:CheckDialogLanguage");
+        return RuntimeTypeResolver.Method("LocalizationManager", "CheckDialogLanguage", typeof(string));
     }
 
     private static void Postfix(string __0, ref string __result)

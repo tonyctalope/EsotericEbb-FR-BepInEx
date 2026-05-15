@@ -13,7 +13,7 @@ public sealed class Plugin : BasePlugin
 {
     public const string PluginGuid = "fr.esotericebb.translation";
     public const string PluginName = "Esoteric Ebb - Traduction francaise";
-    public const string PluginVersion = "0.1.4";
+    public const string PluginVersion = "0.1.5";
 
     internal static ManualLogSource Logger { get; private set; } = null!;
 
@@ -43,6 +43,7 @@ public sealed class Plugin : BasePlugin
         }
 
         _harmony = new Harmony(PluginGuid);
+        RuntimeTypeResolver.LogTargetStatus(Logger);
         _harmony.PatchAll(Assembly.GetExecutingAssembly());
 
         Logger.LogInfo($"{PluginName} {PluginVersion} loaded with {TranslationCatalog.AssetCount} translated TextAssets and {TranslationCatalog.LineCount} localized IDs.");

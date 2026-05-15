@@ -8,7 +8,7 @@ internal static class ParseCsvPatch
 {
     private static MethodBase? TargetMethod()
     {
-        return AccessTools.Method("LocalizationManager:ParseCSV");
+        return RuntimeTypeResolver.Method("LocalizationManager", "ParseCSV", typeof(string));
     }
 
     private static void Prefix(ref string __0)

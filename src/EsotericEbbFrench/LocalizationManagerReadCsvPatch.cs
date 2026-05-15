@@ -10,7 +10,7 @@ internal static class ReadCsvPatch
 
     private static MethodBase? TargetMethod()
     {
-        return AccessTools.Method("LocalizationManager:ReadCSV");
+        return RuntimeTypeResolver.Method("LocalizationManager", "ReadCSV");
     }
 
     private static void Postfix(object __instance)

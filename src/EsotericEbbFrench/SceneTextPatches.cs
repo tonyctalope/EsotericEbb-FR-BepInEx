@@ -1,6 +1,5 @@
 using System.Reflection;
 using HarmonyLib;
-using Il2CppInterop.Runtime;
 using UnityEngine;
 
 namespace EsotericEbbFrench;
@@ -73,15 +72,15 @@ internal static class SceneTextReplacer
 
     private static IEnumerable<object> FindObjectsOfTypeAll(Type type)
     {
-        Il2CppSystem.Type il2CppType = Il2CppType.From(type, throwOnFailure: false);
-        MethodInfo? method = typeof(UnityEngine.Object).GetMethod(
-            "FindObjectsOfTypeAll",
-            BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
-            binder: null,
-            types: new[] { typeof(Il2CppSystem.Type) },
-            modifiers: null);
+        object? il2CppType = ConvertToIl2CppType(type);
+        MethodInfo? method = FindIl2CppObjectScanMethod();
 
-        object? objects = method?.Invoke(null, new object[] { il2CppType });
+        if (il2CppType == null || method == null)
+        {
+            yield break;
+        }
+
+        object? objects = method.Invoke(null, new[] { il2CppType });
         if (objects is not System.Collections.IEnumerable enumerable)
         {
             yield break;
@@ -91,6 +90,34 @@ internal static class SceneTextReplacer
         {
             yield return item;
         }
+    }
+
+    private static object? ConvertToIl2CppType(Type type)
+    {
+        Type? il2CppTypeHelper = RuntimeTypeResolver.FindType("Il2CppInterop.Runtime.Il2CppType");
+        MethodInfo? from = il2CppTypeHelper?.GetMethods(BindingFlags.Static | BindingFlags.Public)
+            .FirstOrDefault(method =>
+            {
+                ParameterInfo[] parameters = method.GetParameters();
+                return method.Name == "From"
+                    && parameters.Length == 2
+                    && parameters[0].ParameterType == typeof(Type)
+                    && parameters[1].ParameterType == typeof(bool);
+            });
+
+        return from?.Invoke(null, new object[] { type, false });
+    }
+
+    private static MethodInfo? FindIl2CppObjectScanMethod()
+    {
+        return typeof(UnityEngine.Object).GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+            .FirstOrDefault(method =>
+            {
+                ParameterInfo[] parameters = method.GetParameters();
+                return method.Name == "FindObjectsOfTypeAll"
+                    && parameters.Length == 1
+                    && parameters[0].ParameterType.FullName == "Il2CppSystem.Type";
+            });
     }
 
     private static string Shorten(string value)

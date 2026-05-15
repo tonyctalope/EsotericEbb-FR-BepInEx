@@ -15,7 +15,7 @@ internal static class SceneTextReplacer
 
         try
         {
-            int replaced = ReplaceExistingTexts("TMPro.TMP_Text") + ReplaceExistingTexts("UnityEngine.UI.Text");
+            int replaced = ReplaceExistingTextsOfType("TMPro.TMP_Text") + ReplaceExistingTextsOfType("UnityEngine.UI.Text");
             if (replaced > 0 || _scans <= 3)
             {
                 Plugin.Logger.LogInfo($"Scene text scan after {reason}: replaced {replaced} texts.");
@@ -27,7 +27,7 @@ internal static class SceneTextReplacer
         }
     }
 
-    private static int ReplaceExistingTexts(string typeName)
+    private static int ReplaceExistingTextsOfType(string typeName)
     {
         Type? type = AccessTools.TypeByName(typeName);
         if (type == null)

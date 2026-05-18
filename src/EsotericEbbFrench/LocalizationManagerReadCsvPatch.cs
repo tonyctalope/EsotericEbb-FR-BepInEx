@@ -8,6 +8,11 @@ internal static class ReadCsvPatch
 {
     private static int _runs;
 
+    private static bool Prepare()
+    {
+        return true;
+    }
+
     private static MethodBase? TargetMethod()
     {
         return RuntimeTypeResolver.Method("LocalizationManager", "ReadCSV");

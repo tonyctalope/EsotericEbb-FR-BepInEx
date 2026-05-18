@@ -52,6 +52,9 @@ internal static class RuntimeTypeResolver
         Log(logger, "LocalizationManager.ReadCSV", Method("LocalizationManager", "ReadCSV"));
         Log(logger, "CanvasManager.Start", Method("CanvasManager", "Start"));
         Log(logger, "CanvasManager.GetUI", Method("CanvasManager", "GetUI"));
+        Log(logger, "CanvasManager.LateUpdate", Method("CanvasManager", "LateUpdate"));
+        Log(logger, "MenuController.Start", Method("MenuController", "Start"));
+        Log(logger, "MenuController.Update", Method("MenuController", "Update"));
         Log(logger, "TMPro.TMP_Text.text setter", PropertySetter("TMPro.TMP_Text", "text"));
         Log(logger, "UnityEngine.UI.Text.text setter", PropertySetter("UnityEngine.UI.Text", "text"));
     }

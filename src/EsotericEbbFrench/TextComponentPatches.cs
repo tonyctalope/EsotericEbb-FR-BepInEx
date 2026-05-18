@@ -29,7 +29,7 @@ internal static class TmpTextSetterPatch
 {
     private static bool Prepare()
     {
-        return RuntimeTypeResolver.PropertySetter("TMPro.TMP_Text", "text") != null;
+        return false;
     }
 
     private static MethodBase? TargetMethod()
@@ -44,6 +44,11 @@ internal static class TmpTextSetterPatch
 
     private static void Replace(ref string value, string component)
     {
+        if (!RuntimeTranslationState.DynamicTextEnabled)
+        {
+            return;
+        }
+
         if (TranslationCatalog.TryGetReverseText(value, out string replacement))
         {
             TextReplacementPatchLog.Log(component, value, replacement);
@@ -53,11 +58,39 @@ internal static class TmpTextSetterPatch
 }
 
 [HarmonyPatch]
+internal static class TmpTextSetTextPatch
+{
+    private static bool Prepare()
+    {
+        return false;
+    }
+
+    private static IEnumerable<MethodBase> TargetMethods()
+    {
+        yield break;
+    }
+
+    private static void Prefix(ref string __0)
+    {
+        if (!RuntimeTranslationState.DynamicTextEnabled)
+        {
+            return;
+        }
+
+        if (TranslationCatalog.TryGetReverseText(__0, out string replacement))
+        {
+            TextReplacementPatchLog.Log("TMP_Text method", __0, replacement);
+            __0 = replacement;
+        }
+    }
+}
+
+[HarmonyPatch]
 internal static class UnityUiTextSetterPatch
 {
     private static bool Prepare()
     {
-        return RuntimeTypeResolver.PropertySetter("UnityEngine.UI.Text", "text") != null;
+        return false;
     }
 
     private static MethodBase? TargetMethod()
@@ -67,6 +100,11 @@ internal static class UnityUiTextSetterPatch
 
     private static void Prefix(ref string __0)
     {
+        if (!RuntimeTranslationState.DynamicTextEnabled)
+        {
+            return;
+        }
+
         if (TranslationCatalog.TryGetReverseText(__0, out string replacement))
         {
             TextReplacementPatchLog.Log("UnityEngine.UI.Text", __0, replacement);

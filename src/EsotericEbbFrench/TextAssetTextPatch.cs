@@ -8,6 +8,11 @@ internal static class TextAssetTextPatch
 {
     private static int _hits;
 
+    private static bool Prepare()
+    {
+        return false;
+    }
+
     private static bool Prefix(TextAsset __instance, ref string __result)
     {
         if (__instance != null && TranslationCatalog.TryGetText(__instance.name, out string text))

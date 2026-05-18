@@ -20,6 +20,11 @@ internal static class LocalizationPatchLog
 [HarmonyPatch]
 internal static class CheckLanguagePatch
 {
+    private static bool Prepare()
+    {
+        return true;
+    }
+
     private static MethodBase? TargetMethod()
     {
         return RuntimeTypeResolver.Method("LocalizationManager", "CheckLanguage", typeof(string));
@@ -38,6 +43,11 @@ internal static class CheckLanguagePatch
 [HarmonyPatch]
 internal static class CheckDialogLanguagePatch
 {
+    private static bool Prepare()
+    {
+        return true;
+    }
+
     private static MethodBase? TargetMethod()
     {
         return RuntimeTypeResolver.Method("LocalizationManager", "CheckDialogLanguage", typeof(string));

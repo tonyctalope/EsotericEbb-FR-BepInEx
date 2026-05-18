@@ -9,7 +9,13 @@ internal static class TranslationCatalog
     private static readonly Dictionary<string, string> Lines = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, string> DialogLines = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, string> ReverseTexts = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, string> NormalizedReverseTexts = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, string> RuntimeTexts = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, string> NormalizedRuntimeTexts = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> AmbiguousReverseTexts = new(StringComparer.Ordinal);
+    private static readonly HashSet<string> AmbiguousNormalizedReverseTexts = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly HashSet<string> AmbiguousRuntimeTexts = new(StringComparer.Ordinal);
+    private static readonly HashSet<string> AmbiguousNormalizedRuntimeTexts = new(StringComparer.OrdinalIgnoreCase);
 
     public static int AssetCount => Texts.Count;
     public static int LineCount => Lines.Count + DialogLines.Count;
@@ -20,7 +26,13 @@ internal static class TranslationCatalog
         Lines.Clear();
         DialogLines.Clear();
         ReverseTexts.Clear();
+        NormalizedReverseTexts.Clear();
+        RuntimeTexts.Clear();
+        NormalizedRuntimeTexts.Clear();
         AmbiguousReverseTexts.Clear();
+        AmbiguousNormalizedReverseTexts.Clear();
+        AmbiguousRuntimeTexts.Clear();
+        AmbiguousNormalizedRuntimeTexts.Clear();
 
         if (!Directory.Exists(directory))
         {
@@ -42,6 +54,7 @@ internal static class TranslationCatalog
         }
 
         LoadReverseTexts(directory, logger);
+        LoadRuntimeTerms(directory, logger);
         logger.LogInfo($"Loaded translation profile: {directory}");
         return Texts.Count > 0;
     }
@@ -127,29 +140,12 @@ internal static class TranslationCatalog
 
     public static bool TryGetReverseText(string? source, out string text)
     {
-        text = string.Empty;
+        return TryGetDisplayText(source, ReverseTexts, NormalizedReverseTexts, out text);
+    }
 
-        if (string.IsNullOrWhiteSpace(source))
-        {
-            return false;
-        }
-
-        if (ReverseTexts.TryGetValue(source, out string? value))
-        {
-            text = value;
-            return true;
-        }
-
-        string trimmed = source.Trim();
-        if (trimmed.Length != source.Length && ReverseTexts.TryGetValue(trimmed, out value))
-        {
-            int leading = source.Length - source.TrimStart().Length;
-            int trailing = source.Length - source.TrimEnd().Length;
-            text = source[..leading] + value + source[(source.Length - trailing)..];
-            return true;
-        }
-
-        return false;
+    public static bool TryGetRuntimeText(string? source, out string text)
+    {
+        return TryGetDisplayText(source, RuntimeTexts, NormalizedRuntimeTexts, out text);
     }
 
     private static void LoadLines(string assetName, string content, string profile, ManualLogSource logger)
@@ -249,10 +245,146 @@ internal static class TranslationCatalog
             }
 
             AddReverseText(row[sourceIndex], row[targetIndex]);
+            AddDashTermReverseText(row[sourceIndex], row[targetIndex]);
         }
     }
 
+    private static void LoadRuntimeTerms(string directory, ManualLogSource logger)
+    {
+        string? profilesDirectory = Directory.GetParent(directory)?.FullName;
+        if (profilesDirectory == null)
+        {
+            return;
+        }
+
+        string path = Path.Combine(profilesDirectory, "runtime_terms.csv");
+        if (!File.Exists(path))
+        {
+            return;
+        }
+
+        List<string[]> rows = ParseCsv(File.ReadAllText(path));
+        if (rows.Count < 2)
+        {
+            return;
+        }
+
+        string[] header = rows[0];
+        int sourceIndex = IndexOf(header, "ENGLISH");
+        int targetIndex = IndexOf(header, "FRENCH");
+        if (sourceIndex < 0 || targetIndex < 0)
+        {
+            logger.LogWarning($"Runtime terms file has no ENGLISH/FRENCH header: {path}");
+            return;
+        }
+
+        int added = 0;
+        for (int i = 1; i < rows.Count; i++)
+        {
+            string[] row = rows[i];
+            if (sourceIndex >= row.Length || targetIndex >= row.Length)
+            {
+                continue;
+            }
+
+            AddRuntimeText(row[sourceIndex], row[targetIndex]);
+            added++;
+        }
+
+        logger.LogInfo($"Indexed {RuntimeTexts.Count} runtime text replacements from {added} runtime rows.");
+    }
+
     private static void AddReverseText(string source, string target)
+    {
+        AddDisplayTextWithVariants(source, target, ReverseTexts, NormalizedReverseTexts, AmbiguousReverseTexts, AmbiguousNormalizedReverseTexts);
+    }
+
+    private static void AddRuntimeText(string source, string target)
+    {
+        AddDisplayTextWithVariants(source, target, RuntimeTexts, NormalizedRuntimeTexts, AmbiguousRuntimeTexts, AmbiguousNormalizedRuntimeTexts);
+    }
+
+    private static void AddDashTermReverseText(string source, string target)
+    {
+        int sourceDash = source.IndexOf(" - ", StringComparison.Ordinal);
+        int targetDash = target.IndexOf(" - ", StringComparison.Ordinal);
+        if (sourceDash <= 0 || targetDash <= 0)
+        {
+            return;
+        }
+
+        AddReverseText(source[..sourceDash], target[..targetDash]);
+    }
+
+    private static void AddNormalizedReverseText(string source, string target)
+    {
+        AddNormalizedDisplayText(source, target, NormalizedReverseTexts, AmbiguousNormalizedReverseTexts);
+    }
+
+    private static bool TryGetDisplayText(
+        string? source,
+        Dictionary<string, string> exactTexts,
+        Dictionary<string, string> normalizedTexts,
+        out string text)
+    {
+        text = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            return false;
+        }
+
+        if (exactTexts.TryGetValue(source, out string? value))
+        {
+            text = value;
+            return true;
+        }
+
+        string trimmed = source.Trim();
+        if (trimmed.Length != source.Length && exactTexts.TryGetValue(trimmed, out value))
+        {
+            int leading = source.Length - source.TrimStart().Length;
+            int trailing = source.Length - source.TrimEnd().Length;
+            text = source[..leading] + value + source[(source.Length - trailing)..];
+            return true;
+        }
+
+        string normalized = NormalizeDisplayText(source);
+        if (normalized.Length > 0 && normalizedTexts.TryGetValue(normalized, out value))
+        {
+            text = value;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void AddDisplayTextWithVariants(
+        string source,
+        string target,
+        Dictionary<string, string> exactTexts,
+        Dictionary<string, string> normalizedTexts,
+        HashSet<string> ambiguousTexts,
+        HashSet<string> ambiguousNormalizedTexts)
+    {
+        AddDisplayText(source, target, exactTexts, normalizedTexts, ambiguousTexts, ambiguousNormalizedTexts);
+
+        string sourceWithoutQuotes = StripMatchingQuotes(source);
+        string targetWithoutQuotes = StripMatchingQuotes(target);
+        if (!sourceWithoutQuotes.Equals(source.Trim(), StringComparison.Ordinal)
+            && !targetWithoutQuotes.Equals(target.Trim(), StringComparison.Ordinal))
+        {
+            AddDisplayText(sourceWithoutQuotes, targetWithoutQuotes, exactTexts, normalizedTexts, ambiguousTexts, ambiguousNormalizedTexts);
+        }
+    }
+
+    private static void AddDisplayText(
+        string source,
+        string target,
+        Dictionary<string, string> exactTexts,
+        Dictionary<string, string> normalizedTexts,
+        HashSet<string> ambiguousTexts,
+        HashSet<string> ambiguousNormalizedTexts)
     {
         source = source.Trim();
         target = target.Trim();
@@ -262,23 +394,114 @@ internal static class TranslationCatalog
             return;
         }
 
-        if (AmbiguousReverseTexts.Contains(source))
+        if (ambiguousTexts.Contains(source))
         {
             return;
         }
 
-        if (ReverseTexts.TryGetValue(source, out string? existing))
+        if (exactTexts.TryGetValue(source, out string? existing))
         {
             if (!existing.Equals(target, StringComparison.Ordinal))
             {
-                ReverseTexts.Remove(source);
-                AmbiguousReverseTexts.Add(source);
+                exactTexts.Remove(source);
+                ambiguousTexts.Add(source);
             }
 
             return;
         }
 
-        ReverseTexts[source] = target;
+        exactTexts[source] = target;
+        AddNormalizedDisplayText(source, target, normalizedTexts, ambiguousNormalizedTexts);
+    }
+
+    private static void AddNormalizedDisplayText(
+        string source,
+        string target,
+        Dictionary<string, string> normalizedTexts,
+        HashSet<string> ambiguousNormalizedTexts)
+    {
+        string normalized = NormalizeDisplayText(source);
+        if (normalized.Length < 2 || ambiguousNormalizedTexts.Contains(normalized))
+        {
+            return;
+        }
+
+        if (normalizedTexts.TryGetValue(normalized, out string? existing))
+        {
+            if (!existing.Equals(target, StringComparison.Ordinal))
+            {
+                normalizedTexts.Remove(normalized);
+                ambiguousNormalizedTexts.Add(normalized);
+            }
+
+            return;
+        }
+
+        normalizedTexts[normalized] = target;
+    }
+
+    private static string StripMatchingQuotes(string value)
+    {
+        value = value.Trim();
+        if (value.Length < 2)
+        {
+            return value;
+        }
+
+        if ((value[0] == '"' && value[^1] == '"')
+            || (value[0] == '\'' && value[^1] == '\''))
+        {
+            return value[1..^1].Trim();
+        }
+
+        return value;
+    }
+
+    private static string NormalizeDisplayText(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        StringBuilder builder = new();
+        bool inTag = false;
+        bool previousWhitespace = false;
+
+        foreach (char c in value)
+        {
+            if (c == '<')
+            {
+                inTag = true;
+                continue;
+            }
+
+            if (inTag)
+            {
+                if (c == '>')
+                {
+                    inTag = false;
+                }
+
+                continue;
+            }
+
+            if (char.IsWhiteSpace(c))
+            {
+                if (!previousWhitespace && builder.Length > 0)
+                {
+                    builder.Append(' ');
+                    previousWhitespace = true;
+                }
+
+                continue;
+            }
+
+            builder.Append(c);
+            previousWhitespace = false;
+        }
+
+        return builder.ToString().Trim();
     }
 
     private static int FindValueColumn(string assetName, string[] header, string profile)

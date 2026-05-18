@@ -1,6 +1,9 @@
 # Esoteric Ebb - Traduction francaise
 
-Mod BepInEx IL2CPP pour charger une traduction francaise complete de *Esoteric Ebb* sans modifier les fichiers du jeu.
+Traduction francaise de *Esoteric Ebb* avec une installation hybride :
+
+- un mod BepInEx IL2CPP pour les tables de localisation, l'UI et les textes charges a l'execution ;
+- un patcher statique optionnel, recommande, qui remplace les dialogues Ink directement dans les assets Unity locaux du joueur.
 
 ## Etat
 
@@ -27,9 +30,21 @@ Esoteric Ebb/
       EsotericEbbFrench/
         EsotericEbbFrench.dll
         translations/
+  tools/
+    StaticInkPatcher/
+  Patch-French-Static.ps1
+  Restore-Original-Assets.ps1
 ```
 
-4. Lancer le jeu.
+4. Fermer le jeu s'il est lance, puis appliquer le patch statique :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Patch-French-Static.ps1
+```
+
+Le patcher cree une sauvegarde dans `EsotericEbb-FR-StaticBackup/` avant de modifier les `.assets`.
+
+5. Lancer le jeu.
 
 Par defaut, le mod utilise le profil `english-slot`, qui remplace l'emplacement anglais par le francais pour fonctionner sans menu de langue. Si le jeu expose une vraie option francaise, lancer une fois le jeu puis modifier :
 
@@ -44,6 +59,12 @@ Profile = fr-columns
 ```
 
 Le profil `german-slot` reste disponible si tu preferes garder l'emplacement anglais original et choisir l'allemand en jeu.
+
+Pour restaurer les assets originaux :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Restore-Original-Assets.ps1
+```
 
 ## Build
 
@@ -60,6 +81,8 @@ Construire un zip de release :
 ```powershell
 .\scripts\Build-Release.ps1 -Version 0.1.0
 ```
+
+Le zip contient le mod BepInEx, les traductions, le patcher statique Windows x64 et les scripts d'application/restauration.
 
 Installer localement dans un dossier de jeu :
 
@@ -87,7 +110,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Build-Release.ps1 -Version 0.
 
 ## Architecture
 
-Le mod ne patche pas `resources.assets`. Il intercepte le texte des `TextAsset` Unity nommes `Dialogs`, `UIElements`, `QuestPoints`, `GlossaryTerms`, `Feats` et `SheetInfo`, puis renvoie les fichiers localises depuis `BepInEx/plugins/EsotericEbbFrench/translations/`.
+Le mod BepInEx intercepte les tables Unity nommees `Dialogs`, `UIElements`, `QuestPoints`, `GlossaryTerms`, `Feats` et `SheetInfo`, puis renvoie les fichiers localises depuis `BepInEx/plugins/EsotericEbbFrench/translations/`.
+
+Le patcher statique couvre les dialogues Ink compiles dans `sharedassets*.assets`, notamment les choix et certaines lignes affichees pendant une partie. Il ne distribue pas d'assets modifies : il patch uniquement l'installation locale du joueur avec backup/restauration.
 
 Voir `docs/ARCHITECTURE.md` pour les details.
 

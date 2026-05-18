@@ -6,6 +6,11 @@ namespace EsotericEbbFrench;
 [HarmonyPatch]
 internal static class ParseCsvPatch
 {
+    private static bool Prepare()
+    {
+        return true;
+    }
+
     private static MethodBase? TargetMethod()
     {
         return RuntimeTypeResolver.Method("LocalizationManager", "ParseCSV", typeof(string));

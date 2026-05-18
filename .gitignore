@@ -10,5 +10,6 @@ dist/*.zip
 .idea/
 .vscode/
 BepInEx/
+EsotericEbb-FR-StaticBackup/
 *.log
 *.tmp

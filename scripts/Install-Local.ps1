@@ -3,32 +3,36 @@ param(
   [string] $GamePath,
 
   [string] $Configuration = "Release",
-  [switch] $SkipBuild
+  [switch] $SkipBuild,
+  [switch] $NoPatch
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$Project = Join-Path $RepoRoot "src\EsotericEbbFrench\EsotericEbbFrench.csproj"
-$Dll = Join-Path $RepoRoot "src\EsotericEbbFrench\bin\$Configuration\net6.0\EsotericEbbFrench.dll"
+$PatcherProject = Join-Path $RepoRoot "tools\StaticInkPatcher\StaticInkPatcher.csproj"
+$PatcherPublish = Join-Path $RepoRoot "tools\StaticInkPatcher\bin\$Configuration\publish\win-x64"
 $TranslationsSource = Join-Path $RepoRoot "assets\translations"
-$PluginTarget = Join-Path $GamePath "BepInEx\plugins\EsotericEbbFrench"
+$PatcherTarget = Join-Path $GamePath "tools\StaticInkPatcher"
+$TranslationsTarget = Join-Path $GamePath "translations"
 
 if (-not (Test-Path (Join-Path $GamePath "Esoteric Ebb.exe"))) {
   throw "Game executable not found in $GamePath"
 }
 
 if (-not $SkipBuild) {
-  dotnet build $Project -c $Configuration
+  dotnet publish $PatcherProject -c $Configuration -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=false -o $PatcherPublish
 }
 
-if (-not (Test-Path $Dll)) {
-  throw "DLL not found: $Dll"
+New-Item -ItemType Directory -Force $PatcherTarget | Out-Null
+Copy-Item (Join-Path $PatcherPublish "*") $PatcherTarget -Recurse -Force
+Copy-Item $TranslationsSource $TranslationsTarget -Recurse -Force
+Copy-Item (Join-Path $RepoRoot "scripts\Patch-French-Static.ps1") (Join-Path $GamePath "Patch-French-Static.ps1") -Force
+Copy-Item (Join-Path $RepoRoot "scripts\Restore-Original-Assets.ps1") (Join-Path $GamePath "Restore-Original-Assets.ps1") -Force
+
+if (-not $NoPatch) {
+  & (Join-Path $GamePath "Patch-French-Static.ps1") -GamePath $GamePath
 }
 
-New-Item -ItemType Directory -Force $PluginTarget | Out-Null
-Copy-Item $Dll (Join-Path $PluginTarget "EsotericEbbFrench.dll") -Force
-Copy-Item $TranslationsSource (Join-Path $PluginTarget "translations") -Recurse -Force
-
-Write-Host "Installed EsotericEbbFrench to $PluginTarget"
+Write-Host "Installed static French patcher to $GamePath"

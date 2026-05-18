@@ -46,13 +46,13 @@ jobs:
           $version = $tag.TrimStart("v")
           "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append
           "MOD_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
-          "ZIP_NAME=EsotericEbb-FR-BepInEx-$version.zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "ZIP_NAME=EsotericEbb-FR-Static-$version.zip" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Restore
-        run: dotnet restore .\src\EsotericEbbFrench\EsotericEbbFrench.csproj
+        run: dotnet restore .\tools\StaticInkPatcher\StaticInkPatcher.csproj
 
       - name: Build
-        run: dotnet build .\src\EsotericEbbFrench\EsotericEbbFrench.csproj -c Release --no-restore
+        run: dotnet build .\tools\StaticInkPatcher\StaticInkPatcher.csproj -c Release --no-restore
 
       - name: Package
         shell: pwsh

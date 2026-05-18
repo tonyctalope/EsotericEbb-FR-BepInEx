@@ -22,10 +22,10 @@ jobs:
           cache-dependency-path: "**/*.csproj"
 
       - name: Restore
-        run: dotnet restore .\src\EsotericEbbFrench\EsotericEbbFrench.csproj
+        run: dotnet restore .\tools\StaticInkPatcher\StaticInkPatcher.csproj
 
       - name: Build
-        run: dotnet build .\src\EsotericEbbFrench\EsotericEbbFrench.csproj -c Release --no-restore
+        run: dotnet build .\tools\StaticInkPatcher\StaticInkPatcher.csproj -c Release --no-restore
 
       - name: Package
         shell: pwsh
@@ -33,6 +33,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: EsotericEbb-FR-BepInEx
+          name: EsotericEbb-FR-Static
           path: dist/*.zip
           if-no-files-found: error

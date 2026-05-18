@@ -20,6 +20,16 @@ internal sealed record TranslationEntry(string Source, string Target);
 
 internal static partial class Program
 {
+    private static readonly string[] LocalizedTextAssetNames =
+    [
+        "Dialogs",
+        "UIElements",
+        "QuestPoints",
+        "GlossaryTerms",
+        "Feats",
+        "SheetInfo"
+    ];
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -64,19 +74,20 @@ internal static partial class Program
         }
 
         Dictionary<string, Dictionary<string, TranslationEntry>> translations = LoadDialogTranslations(dialogsPath);
+        Dictionary<string, string> textAssetReplacements = LoadTextAssetReplacements(options.TranslationsDir);
+        Dictionary<string, string> sceneTextReplacements = LoadSceneTextReplacements(options.TranslationsDir);
         Console.WriteLine($"Traductions Ink chargees: {translations.Sum(pair => pair.Value.Count)} lignes dans {translations.Count} stories.");
+        Console.WriteLine($"Tables statiques chargees: {textAssetReplacements.Count} TextAssets.");
+        Console.WriteLine($"Textes de scene charges: {sceneTextReplacements.Count} remplacements.");
 
         int filesTouched = 0;
         int storiesTouched = 0;
+        int tablesTouched = 0;
+        int sceneTextsTouched = 0;
         int stringsReplaced = 0;
         foreach (string assetPath in EnumerateCandidateAssets(dataDir))
         {
-            if (!ContainsAscii(assetPath, "\"inkVersion\""))
-            {
-                continue;
-            }
-
-            PatchFileResult result = PatchAssetsFile(assetPath, translations, options);
+            PatchFileResult result = PatchAssetsFile(assetPath, translations, textAssetReplacements, sceneTextReplacements, options);
             if (result.Replacements == 0)
             {
                 continue;
@@ -84,24 +95,40 @@ internal static partial class Program
 
             filesTouched++;
             storiesTouched += result.Stories;
+            tablesTouched += result.Tables;
+            sceneTextsTouched += result.SceneTexts;
             stringsReplaced += result.Replacements;
         }
 
         string mode = options.DryRun ? "Simulation" : "Patch";
-        Console.WriteLine($"{mode} termine: {filesTouched} fichiers Unity, {storiesTouched} stories Ink, {stringsReplaced} textes remplaces.");
+        Console.WriteLine($"{mode} termine: {filesTouched} fichiers Unity, {storiesTouched} stories Ink, {tablesTouched} tables, {sceneTextsTouched} textes de scene, {stringsReplaced} textes remplaces.");
         return 0;
     }
 
     private static PatchFileResult PatchAssetsFile(
         string assetPath,
         Dictionary<string, Dictionary<string, TranslationEntry>> translations,
+        Dictionary<string, string> textAssetReplacements,
+        Dictionary<string, string> sceneTextReplacements,
         Options options)
     {
         AssetsManager manager = new();
-        AssetsFileInstance instance = manager.LoadAssetsFile(assetPath, true);
+        AssetsFileInstance instance;
+        try
+        {
+            instance = manager.LoadAssetsFile(assetPath, true);
+        }
+        catch
+        {
+            manager.UnloadAll(true);
+            return new PatchFileResult(0, 0, 0, 0);
+        }
+
         List<AssetFileInfo> textAssets = instance.file.GetAssetsOfType(AssetClassID.TextAsset);
 
         int stories = 0;
+        int tables = 0;
+        int sceneTexts = 0;
         int replacements = 0;
         try
         {
@@ -110,6 +137,27 @@ internal static partial class Program
                 byte[] raw = ReadAssetBytes(instance.file, info);
                 if (!TryReadTextAsset(raw, out string name, out string script))
                 {
+                    continue;
+                }
+
+                if (textAssetReplacements.TryGetValue(name, out string? replacementTable))
+                {
+                    if (!TextEquals(script, replacementTable))
+                    {
+                        tables++;
+                        replacements++;
+                        if (options.Verbose)
+                        {
+                            Console.WriteLine($"{Path.GetFileName(assetPath)}: table {name} remplacee");
+                        }
+
+                        if (!options.DryRun)
+                        {
+                            byte[] newRaw = WriteTextAsset(name, replacementTable);
+                            info.SetNewData(newRaw);
+                        }
+                    }
+
                     continue;
                 }
 
@@ -144,6 +192,31 @@ internal static partial class Program
                 }
             }
 
+            if (sceneTextReplacements.Count > 0)
+            {
+                foreach (AssetFileInfo info in instance.file.GetAssetsOfType(AssetClassID.MonoBehaviour))
+                {
+                    byte[] raw = ReadAssetBytes(instance.file, info);
+                    byte[] patched = PatchSerializedStrings(raw, sceneTextReplacements, out int sceneReplacements);
+                    if (sceneReplacements == 0)
+                    {
+                        continue;
+                    }
+
+                    sceneTexts += sceneReplacements;
+                    replacements += sceneReplacements;
+                    if (options.Verbose)
+                    {
+                        Console.WriteLine($"{Path.GetFileName(assetPath)}: MonoBehaviour {info.PathId} -> {sceneReplacements} textes de scene");
+                    }
+
+                    if (!options.DryRun)
+                    {
+                        info.SetNewData(patched);
+                    }
+                }
+            }
+
             if (replacements > 0 && !options.DryRun)
             {
                 BackupOnce(assetPath, options);
@@ -164,7 +237,15 @@ internal static partial class Program
             manager.UnloadAll(true);
         }
 
-        return new PatchFileResult(stories, replacements);
+        return new PatchFileResult(stories, tables, sceneTexts, replacements);
+    }
+
+    private static bool TextEquals(string current, string replacement)
+    {
+        return string.Equals(
+            StripBom(current).ReplaceLineEndings("\n"),
+            StripBom(replacement).ReplaceLineEndings("\n"),
+            StringComparison.Ordinal);
     }
 
     private static string PatchInkJson(
@@ -361,11 +442,92 @@ internal static partial class Program
         return result;
     }
 
+    private static Dictionary<string, string> LoadTextAssetReplacements(string translationsDir)
+    {
+        Dictionary<string, string> result = new(StringComparer.OrdinalIgnoreCase);
+        foreach (string name in LocalizedTextAssetNames)
+        {
+            string path = Path.Combine(translationsDir, name + ".txt");
+            if (File.Exists(path))
+            {
+                result[name] = File.ReadAllText(path, Encoding.UTF8);
+            }
+        }
+
+        return result;
+    }
+
+    private static Dictionary<string, string> LoadSceneTextReplacements(string translationsDir)
+    {
+        string? root = Directory.GetParent(translationsDir)?.FullName;
+        if (root == null)
+        {
+            return new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        string path = Path.Combine(root, "runtime_terms.csv");
+        if (!File.Exists(path))
+        {
+            return new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        List<string[]> rows = ParseCsv(File.ReadAllText(path, Encoding.UTF8));
+        if (rows.Count < 2)
+        {
+            return new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        int sourceIndex = IndexOf(rows[0], "ENGLISH");
+        int targetIndex = IndexOf(rows[0], "FRENCH");
+        if (sourceIndex < 0 || targetIndex < 0)
+        {
+            return new Dictionary<string, string>(StringComparer.Ordinal);
+        }
+
+        Dictionary<string, string> result = new(StringComparer.Ordinal);
+        for (int i = 1; i < rows.Count; i++)
+        {
+            string[] row = rows[i];
+            if (sourceIndex >= row.Length || targetIndex >= row.Length)
+            {
+                continue;
+            }
+
+            AddSceneReplacement(result, row[sourceIndex], row[targetIndex]);
+        }
+
+        return result;
+    }
+
+    private static void AddSceneReplacement(Dictionary<string, string> result, string source, string target)
+    {
+        source = source.Trim();
+        target = target.Trim();
+        if (source.Length == 0 || target.Length == 0 || source == target)
+        {
+            return;
+        }
+
+        result[source] = target;
+        result["<noparse></noparse>" + source] = target;
+    }
+
     private static IEnumerable<string> EnumerateCandidateAssets(string dataDir)
     {
-        foreach (string path in Directory.EnumerateFiles(dataDir, "*.assets", SearchOption.TopDirectoryOnly))
+        foreach (string path in Directory.EnumerateFiles(dataDir, "*", SearchOption.TopDirectoryOnly))
         {
-            yield return path;
+            string name = Path.GetFileName(path);
+            if (name.EndsWith(".resS", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (name.EndsWith(".assets", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("globalgamemanagers", StringComparison.OrdinalIgnoreCase)
+                || LevelFileRegex().IsMatch(name))
+            {
+                yield return path;
+            }
         }
     }
 
@@ -447,6 +609,80 @@ internal static partial class Program
         {
             stream.WriteByte(0);
         }
+    }
+
+    private static byte[] PatchSerializedStrings(byte[] raw, Dictionary<string, string> replacements, out int replacementCount)
+    {
+        replacementCount = 0;
+        using MemoryStream output = new(raw.Length);
+        int cursor = 0;
+        int lastWritten = 0;
+        while (cursor + 4 <= raw.Length)
+        {
+            if (cursor % 4 == 0
+                && TryReadSerializedStringAt(raw, cursor, replacements, out string replacement, out int serializedLength))
+            {
+                output.Write(raw.AsSpan(lastWritten, cursor - lastWritten));
+                WriteAlignedString(output, replacement);
+                cursor += serializedLength;
+                lastWritten = cursor;
+                replacementCount++;
+                continue;
+            }
+
+            cursor++;
+        }
+
+        if (replacementCount == 0)
+        {
+            return raw;
+        }
+
+        output.Write(raw.AsSpan(lastWritten));
+        return output.ToArray();
+    }
+
+    private static bool TryReadSerializedStringAt(
+        byte[] raw,
+        int offset,
+        Dictionary<string, string> replacements,
+        out string replacement,
+        out int serializedLength)
+    {
+        replacement = string.Empty;
+        serializedLength = 0;
+        int length = BinaryPrimitives.ReadInt32LittleEndian(raw.AsSpan(offset, 4));
+        if (length <= 0 || length > 4096)
+        {
+            return false;
+        }
+
+        int valueOffset = offset + 4;
+        int valueEnd = valueOffset + length;
+        if (valueEnd > raw.Length)
+        {
+            return false;
+        }
+
+        int paddedEnd = valueEnd;
+        while (paddedEnd % 4 != 0)
+        {
+            if (paddedEnd >= raw.Length || raw[paddedEnd] != 0)
+            {
+                return false;
+            }
+
+            paddedEnd++;
+        }
+
+        string value = Encoding.UTF8.GetString(raw, valueOffset, length);
+        if (!replacements.TryGetValue(value, out replacement!) || value == replacement)
+        {
+            return false;
+        }
+
+        serializedLength = paddedEnd - offset;
+        return true;
     }
 
     private static string StripBom(string value)
@@ -608,13 +844,19 @@ internal static partial class Program
 
     private static string ResolveDefaultTranslationsDir(string gameDir)
     {
+        string rootTranslations = Path.Combine(gameDir, "translations", "english-slot");
+        if (Directory.Exists(rootTranslations))
+        {
+            return rootTranslations;
+        }
+
         string installedTranslations = Path.Combine(
             gameDir,
             "BepInEx",
             "plugins",
             "EsotericEbbFrench",
             "translations",
-            "fr-columns");
+            "english-slot");
         if (Directory.Exists(installedTranslations))
         {
             return installedTranslations;
@@ -629,7 +871,7 @@ internal static partial class Program
             "..",
             "assets",
             "translations",
-            "fr-columns"));
+            "english-slot"));
         if (Directory.Exists(repoTranslations))
         {
             return repoTranslations;
@@ -663,7 +905,7 @@ Usage:
   StaticInkPatcher restore --game-dir "E:\...\Esoteric Ebb"
 
 Options:
-  --translations-dir <dir>  Dossier contenant Dialogs.txt, par defaut assets/translations/fr-columns.
+  --translations-dir <dir>  Dossier contenant Dialogs.txt, par defaut translations/english-slot.
   --backup-dir <dir>        Backup des .assets originaux, par defaut EsotericEbb-FR-StaticBackup.
   --dry-run                 Simule patch sans ecrire.
   --verbose                 Affiche les stories modifiees.
@@ -751,5 +993,8 @@ Options:
     [GeneratedRegex(@"^(?<story>.+)_(?<loc>\d+)$", RegexOptions.Compiled)]
     private static partial Regex DialogKeyRegex();
 
-    private sealed record PatchFileResult(int Stories, int Replacements);
+    [GeneratedRegex(@"^level\d+$", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
+    private static partial Regex LevelFileRegex();
+
+    private sealed record PatchFileResult(int Stories, int Tables, int SceneTexts, int Replacements);
 }

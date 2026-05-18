@@ -75,19 +75,16 @@ internal static partial class Program
 
         Dictionary<string, Dictionary<string, TranslationEntry>> translations = LoadDialogTranslations(dialogsPath);
         Dictionary<string, string> textAssetReplacements = LoadTextAssetReplacements(options.TranslationsDir);
-        Dictionary<string, string> sceneTextReplacements = LoadSceneTextReplacements(options.TranslationsDir);
         Console.WriteLine($"Traductions Ink chargees: {translations.Sum(pair => pair.Value.Count)} lignes dans {translations.Count} stories.");
         Console.WriteLine($"Tables statiques chargees: {textAssetReplacements.Count} TextAssets.");
-        Console.WriteLine($"Textes de scene charges: {sceneTextReplacements.Count} remplacements.");
 
         int filesTouched = 0;
         int storiesTouched = 0;
         int tablesTouched = 0;
-        int sceneTextsTouched = 0;
         int stringsReplaced = 0;
         foreach (string assetPath in EnumerateCandidateAssets(dataDir))
         {
-            PatchFileResult result = PatchAssetsFile(assetPath, translations, textAssetReplacements, sceneTextReplacements, options);
+            PatchFileResult result = PatchAssetsFile(assetPath, translations, textAssetReplacements, options);
             if (result.Replacements == 0)
             {
                 continue;
@@ -96,12 +93,11 @@ internal static partial class Program
             filesTouched++;
             storiesTouched += result.Stories;
             tablesTouched += result.Tables;
-            sceneTextsTouched += result.SceneTexts;
             stringsReplaced += result.Replacements;
         }
 
         string mode = options.DryRun ? "Simulation" : "Patch";
-        Console.WriteLine($"{mode} termine: {filesTouched} fichiers Unity, {storiesTouched} stories Ink, {tablesTouched} tables, {sceneTextsTouched} textes de scene, {stringsReplaced} textes remplaces.");
+        Console.WriteLine($"{mode} termine: {filesTouched} fichiers Unity, {storiesTouched} stories Ink, {tablesTouched} tables, {stringsReplaced} textes remplaces.");
         return 0;
     }
 
@@ -109,7 +105,6 @@ internal static partial class Program
         string assetPath,
         Dictionary<string, Dictionary<string, TranslationEntry>> translations,
         Dictionary<string, string> textAssetReplacements,
-        Dictionary<string, string> sceneTextReplacements,
         Options options)
     {
         AssetsManager manager = new();
@@ -121,14 +116,13 @@ internal static partial class Program
         catch
         {
             manager.UnloadAll(true);
-            return new PatchFileResult(0, 0, 0, 0);
+            return new PatchFileResult(0, 0, 0);
         }
 
         List<AssetFileInfo> textAssets = instance.file.GetAssetsOfType(AssetClassID.TextAsset);
 
         int stories = 0;
         int tables = 0;
-        int sceneTexts = 0;
         int replacements = 0;
         try
         {
@@ -192,31 +186,6 @@ internal static partial class Program
                 }
             }
 
-            if (sceneTextReplacements.Count > 0)
-            {
-                foreach (AssetFileInfo info in instance.file.GetAssetsOfType(AssetClassID.MonoBehaviour))
-                {
-                    byte[] raw = ReadAssetBytes(instance.file, info);
-                    byte[] patched = PatchSerializedStrings(raw, sceneTextReplacements, out int sceneReplacements);
-                    if (sceneReplacements == 0)
-                    {
-                        continue;
-                    }
-
-                    sceneTexts += sceneReplacements;
-                    replacements += sceneReplacements;
-                    if (options.Verbose)
-                    {
-                        Console.WriteLine($"{Path.GetFileName(assetPath)}: MonoBehaviour {info.PathId} -> {sceneReplacements} textes de scene");
-                    }
-
-                    if (!options.DryRun)
-                    {
-                        info.SetNewData(patched);
-                    }
-                }
-            }
-
             if (replacements > 0 && !options.DryRun)
             {
                 BackupOnce(assetPath, options);
@@ -237,7 +206,7 @@ internal static partial class Program
             manager.UnloadAll(true);
         }
 
-        return new PatchFileResult(stories, tables, sceneTexts, replacements);
+        return new PatchFileResult(stories, tables, replacements);
     }
 
     private static bool TextEquals(string current, string replacement)
@@ -457,61 +426,6 @@ internal static partial class Program
         return result;
     }
 
-    private static Dictionary<string, string> LoadSceneTextReplacements(string translationsDir)
-    {
-        string? root = Directory.GetParent(translationsDir)?.FullName;
-        if (root == null)
-        {
-            return new Dictionary<string, string>(StringComparer.Ordinal);
-        }
-
-        string path = Path.Combine(root, "runtime_terms.csv");
-        if (!File.Exists(path))
-        {
-            return new Dictionary<string, string>(StringComparer.Ordinal);
-        }
-
-        List<string[]> rows = ParseCsv(File.ReadAllText(path, Encoding.UTF8));
-        if (rows.Count < 2)
-        {
-            return new Dictionary<string, string>(StringComparer.Ordinal);
-        }
-
-        int sourceIndex = IndexOf(rows[0], "ENGLISH");
-        int targetIndex = IndexOf(rows[0], "FRENCH");
-        if (sourceIndex < 0 || targetIndex < 0)
-        {
-            return new Dictionary<string, string>(StringComparer.Ordinal);
-        }
-
-        Dictionary<string, string> result = new(StringComparer.Ordinal);
-        for (int i = 1; i < rows.Count; i++)
-        {
-            string[] row = rows[i];
-            if (sourceIndex >= row.Length || targetIndex >= row.Length)
-            {
-                continue;
-            }
-
-            AddSceneReplacement(result, row[sourceIndex], row[targetIndex]);
-        }
-
-        return result;
-    }
-
-    private static void AddSceneReplacement(Dictionary<string, string> result, string source, string target)
-    {
-        source = source.Trim();
-        target = target.Trim();
-        if (source.Length == 0 || target.Length == 0 || source == target)
-        {
-            return;
-        }
-
-        result[source] = target;
-        result["<noparse></noparse>" + source] = target;
-    }
-
     private static IEnumerable<string> EnumerateCandidateAssets(string dataDir)
     {
         foreach (string path in Directory.EnumerateFiles(dataDir, "*", SearchOption.TopDirectoryOnly))
@@ -522,9 +436,7 @@ internal static partial class Program
                 continue;
             }
 
-            if (name.EndsWith(".assets", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("globalgamemanagers", StringComparison.OrdinalIgnoreCase)
-                || LevelFileRegex().IsMatch(name))
+            if (name.EndsWith(".assets", StringComparison.OrdinalIgnoreCase))
             {
                 yield return path;
             }
@@ -609,80 +521,6 @@ internal static partial class Program
         {
             stream.WriteByte(0);
         }
-    }
-
-    private static byte[] PatchSerializedStrings(byte[] raw, Dictionary<string, string> replacements, out int replacementCount)
-    {
-        replacementCount = 0;
-        using MemoryStream output = new(raw.Length);
-        int cursor = 0;
-        int lastWritten = 0;
-        while (cursor + 4 <= raw.Length)
-        {
-            if (cursor % 4 == 0
-                && TryReadSerializedStringAt(raw, cursor, replacements, out string replacement, out int serializedLength))
-            {
-                output.Write(raw.AsSpan(lastWritten, cursor - lastWritten));
-                WriteAlignedString(output, replacement);
-                cursor += serializedLength;
-                lastWritten = cursor;
-                replacementCount++;
-                continue;
-            }
-
-            cursor++;
-        }
-
-        if (replacementCount == 0)
-        {
-            return raw;
-        }
-
-        output.Write(raw.AsSpan(lastWritten));
-        return output.ToArray();
-    }
-
-    private static bool TryReadSerializedStringAt(
-        byte[] raw,
-        int offset,
-        Dictionary<string, string> replacements,
-        out string replacement,
-        out int serializedLength)
-    {
-        replacement = string.Empty;
-        serializedLength = 0;
-        int length = BinaryPrimitives.ReadInt32LittleEndian(raw.AsSpan(offset, 4));
-        if (length <= 0 || length > 4096)
-        {
-            return false;
-        }
-
-        int valueOffset = offset + 4;
-        int valueEnd = valueOffset + length;
-        if (valueEnd > raw.Length)
-        {
-            return false;
-        }
-
-        int paddedEnd = valueEnd;
-        while (paddedEnd % 4 != 0)
-        {
-            if (paddedEnd >= raw.Length || raw[paddedEnd] != 0)
-            {
-                return false;
-            }
-
-            paddedEnd++;
-        }
-
-        string value = Encoding.UTF8.GetString(raw, valueOffset, length);
-        if (!replacements.TryGetValue(value, out replacement!) || value == replacement)
-        {
-            return false;
-        }
-
-        serializedLength = paddedEnd - offset;
-        return true;
     }
 
     private static string StripBom(string value)
@@ -993,8 +831,5 @@ Options:
     [GeneratedRegex(@"^(?<story>.+)_(?<loc>\d+)$", RegexOptions.Compiled)]
     private static partial Regex DialogKeyRegex();
 
-    [GeneratedRegex(@"^level\d+$", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
-    private static partial Regex LevelFileRegex();
-
-    private sealed record PatchFileResult(int Stories, int Tables, int SceneTexts, int Replacements);
+    private sealed record PatchFileResult(int Stories, int Tables, int Replacements);
 }

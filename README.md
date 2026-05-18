@@ -36,7 +36,7 @@ Esoteric Ebb/
 powershell -ExecutionPolicy Bypass -File .\Patch-French-Static.ps1
 ```
 
-Le patcher remplace les tables de localisation dans `resources.assets`, les dialogues Ink dans `sharedassets*.assets`, et les libelles de scene TextMeshPro connus comme le menu principal. Il cree une sauvegarde dans `EsotericEbb-FR-StaticBackup/` avant de modifier les fichiers.
+Le patcher remplace les tables de localisation dans `resources.assets` et les dialogues Ink dans `sharedassets*.assets`. Il cree une sauvegarde dans `EsotericEbb-FR-StaticBackup/` avant de modifier les fichiers.
 
 4. Lancer le jeu.
 
@@ -87,7 +87,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Build-Release.ps1 -Version 0.
 
 ## Architecture
 
-Le patcher statique remplace les tables Unity nommees `Dialogs`, `UIElements`, `QuestPoints`, `GlossaryTerms`, `Feats` et `SheetInfo`, couvre les dialogues Ink compiles dans `sharedassets*.assets`, puis patch aussi une liste blanche de textes de scene serialises dans les composants TextMeshPro.
+Le patcher statique remplace les tables Unity nommees `Dialogs`, `UIElements`, `QuestPoints`, `GlossaryTerms`, `Feats` et `SheetInfo`, puis couvre les dialogues Ink compiles dans `sharedassets*.assets`.
 
 Le depot conserve du code BepInEx historique pour debug/dev, mais le package joueur est statique-only.
 

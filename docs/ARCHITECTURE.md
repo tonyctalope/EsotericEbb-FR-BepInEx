@@ -6,7 +6,6 @@ Fournir une traduction francaise complete de *Esoteric Ebb* avec une solution re
 
 - patch statique des tables de localisation dans `resources.assets` ;
 - patch statique des dialogues Ink compiles dans `sharedassets*.assets` ;
-- patch statique d'une liste blanche de textes de scene TextMeshPro ;
 - backup/restauration des assets originaux.
 
 ## Strategie statique
@@ -31,7 +30,6 @@ Le tool `tools/StaticInkPatcher` :
 - detecte les `TextAsset` Ink contenant `inkVersion` ;
 - associe le nom de story et le marqueur `LOC_x` a la ligne correspondante de `assets/translations/fr-columns/Dialogs.txt` ;
 - remplace la chaine Ink affichee par la traduction francaise ;
-- remplace les chaines serialisees des `MonoBehaviour` quand elles correspondent exactement a `translations/runtime_terms.csv` ;
 - sauvegarde les assets originaux dans `EsotericEbb-FR-StaticBackup/` avant toute ecriture.
 
 Le depot ne contient pas et ne publie pas d'assets Unity modifies. Le patch s'applique uniquement sur l'installation locale du joueur et peut etre restaure via `Restore-Original-Assets.ps1`.

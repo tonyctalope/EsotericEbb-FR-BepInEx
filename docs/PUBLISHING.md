@@ -66,6 +66,6 @@ Les joueurs doivent l'extraire a la racine du jeu, puis lancer `Patch-French-Sta
 
 ## Test minimum
 
-- `Patch-French-Static.ps1` affiche un resume du type `Patch termine` avec des stories Ink, tables et textes de scene.
+- `Patch-French-Static.ps1` affiche un resume du type `Patch termine` avec des stories Ink et tables.
 - Une nouvelle partie affiche les dialogues, choix et textes UI en francais.
 - Les accents et balises de style s'affichent correctement.
